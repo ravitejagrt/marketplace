@@ -1,2 +1,5 @@
 # Default ignored files
-/workspace.xml
+
+# User-specific stuff:
+.idea/workspace.xml
+.idea/tasks.xml
