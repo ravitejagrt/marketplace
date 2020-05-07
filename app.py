@@ -3,8 +3,10 @@ from io import BytesIO
 from flask import Flask, jsonify, request, send_file
 from flask_mysqldb import MySQL
 import MySQLdb
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 config = configparser.RawConfigParser()
 config.read('ms3-properties.properties')
@@ -12,7 +14,7 @@ config.read('ms3-properties.properties')
 # MySQL configurations
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'admin'
+app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'pace_mp'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
@@ -32,58 +34,86 @@ def index():
     finally:
         cursor.close()
 
-@app.route('/products', methods=['GET', 'POST'])
-def products():
-    if (request.method == 'GET'):
-        try:
-            # conn = mysql.connect()
-            # cursor = conn.cursor(pymysql.cursors.DictCursor)
-            cursor = mysql.connection.cursor()
-            cursor.execute("SELECT * FROM products")
-            products = cursor.fetchall()
-            resp = jsonify(products)
-            resp.status_code = 200
-            return resp
-        except Exception as e:
-            print(e)
-        finally:
-            cursor.close()
-            # conn.close()
-    elif (request.method == 'POST'):
-        try:
-            cursor = mysql.connection.cursor()
-            data = json.load(request.data)
+@app.route('/categories', methods=['GET'])
+def getCategories():
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT id, name, img FROM category")
+        cat = cursor.fetchall()
+        #print('line 43 ', cat)
+        print()
+        
+        categories = []
+        for i in cat:
+            temp = {
+                "id": i["id"],
+                "name": i["name"],
+                "img": i["img"].decode('utf-8')
+            }
+            categories.append(temp)
+        resp = jsonify(categories)
+        resp.status_code = 200
+        print("line 56 ", resp)
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
 
-            insert_stmt = (
-                "INSERT INTO users (firstName, lastName, email, phone) "
-                "VALUES (%s, %s, %s, %s)"
-            )
-            insertData = (data['firstName'], data['lastName'], data['email'], data['phone'])
-            cursor.execute(insert_stmt, insertData)
-            mysql.connection.commit()
+@app.route('/products', methods=['GET'])
+def getProducts():
+    try:
+        # conn = mysql.connect()
+        # cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT * FROM products")
+        products = cursor.fetchall()
+        resp = jsonify(products)
+        resp.status_code = 200
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
 
-        except Exception as e:
+@app.route('/products', methods=['POST'])     
+def setProducts():   
+    try:
+        data = json.loads(request.data)
+        cursor = mysql.connection.cursor()
+
+        insert_stmt = (
+            "INSERT INTO products (name, categoryId, userId, description, price) "
+            "VALUES (%s, %s, %s, %s, %s)"
+        )
+        insertData = (data['prodName'], data['categoryId'], data['userId'], data['prodDesc'], data['prodPrice'])
+        resp = cursor.execute(insert_stmt, insertData)
+        mysql.connection.commit()
+
+        resp=jsonify({'msg':'Success'})
+        resp.status_code = 200
+        return resp
+
+    except Exception as e:
             print(e)
-        finally:
-            cursor.close()
-    else:
-        return 'NOT IMPLEMENTED'
 
 @app.route('/product/<int:productId>', methods=['GET', 'PUT', 'DELETE'])
-def product(productId):
+def getProductById(productId):
     if (request.method == 'GET'):
         try:
             cursor = mysql.connection.cursor()
-            select_stmt = """SELECT * FROM products WHERE id = %s"""
-            cursor.execute(select_stmt, (productId))
-            product = cursor.fetchone()
+            select_stmt = "SELECT id, name, categoryId, userId, description, price, datediff(current_date(), createdDate) as days FROM products WHERE id = %(prodId)s"
+            print(select_stmt)
+            cursor.execute(select_stmt, {'prodId': productId})
+            product = cursor.fetchall()
+            print('p: ', product)
             resp = jsonify(product)
             resp.status_code = 200
             return resp
         except Exception as e:
-            print(e)
+            print('exception: ', e)
         finally:
-            cursor.close()
+            cursor.close()       
     elif (request.method == 'PUT'):
         return "TO BE IMPLEMENTED"
     elif (request.method == 'DELETE'):
@@ -96,7 +126,8 @@ def user(userId):
     if (request.method == 'GET'):
         try:
             cursor = mysql.connection.cursor()
-            select_stmt = "SELECT * FROM users WHERE id = %(userId)s"
+            select_stmt = "SELECT id, firstName, lastName, email FROM users WHERE id = %(userId)s"
+            print(select_stmt)
             cursor.execute(select_stmt, {'userId': userId})
 
             user = cursor.fetchall()
@@ -113,27 +144,32 @@ def user(userId):
     elif (request.method == 'DELETE'):
         return 'TO BE IMPLEMETED'
     else:
-        return 'NOT IMPLEMETED'
+        return 'NOT IMPLEMETED'  
 
 @app.route('/user', methods=['POST'])
 def signup():
     try:
+        print('line 121',request.data, ' ', len(request.data))
         data = json.loads(request.data)
+        count=0
+        for item in data:
+            count+=1
+        print(count)
         cursor = mysql.connection.cursor()
 
         # sql = "INSERT INTO users (firstName, lastName, email, phone) VALUES (%s, %s, %s, %s)"
         # userData = (data.firstName, data.lastName, data.email, data.phone)
         # cursor.execute(sql, userData)
+        if(count!=1):
+            insert_stmt = (
+                "INSERT INTO users (firstName, lastName, email, phone) "
+                "VALUES(%s, %s, %s, %s)"
+            )
+            insertData = (data['firstName'], data['lastName'], data['email'], data['phone'])
+            resp = cursor.execute(insert_stmt, insertData)
+            mysql.connection.commit()
 
-        insert_stmt = (
-            "INSERT INTO users (firstName, lastName, email, phone) "
-            "VALUES (%s, %s, %s, %s)"
-        )
-        insertData = (data['firstName'], data['lastName'], data['email'], data['phone'])
-        resp = cursor.execute(insert_stmt, insertData)
-        mysql.connection.commit()
-
-        select_stmt = """SELECT * from users WHERE email = %(emailId)s"""
+        select_stmt = """SELECT email, firstName, lastName, phone, id from users WHERE email = %(emailId)s"""
         cursor.execute(select_stmt, {'emailId': data['email']})
         user = cursor.fetchall()
         resp = jsonify(user)
@@ -143,7 +179,7 @@ def signup():
     except Exception as e:
         print(e)
     finally:
-        cursor.close()
+     cursor.close()
 
 @app.route('/product/<int:productId>/image', methods=['POST', 'GET'])
 def productImages(productId):
