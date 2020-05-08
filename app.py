@@ -217,7 +217,7 @@ def productImages(productId):
             # print("records : ", records)
             resp = []
             for row in records:
-                resp.append([{ 'imageId': row['image_id'], 'productId': row['product_id'], 'image': str(base64.encodebytes(row['product_image'])) }])
+                resp.append([{ 'imageId': row['image_id'], 'productId': row['product_id'], 'image': row['product_image'].decode('utf-8') }])
                 # i = row['product_image']
                 # write_file(i, "D:\PycharmWork\space1\pmp-api\image.jpeg")
 
