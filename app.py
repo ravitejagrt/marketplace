@@ -222,7 +222,7 @@ def productImages(productId):
                 # i = row['product_image']
                 # write_file(i, "D:\PycharmWork\space1\pmp-api\image.jpeg")
 
-            print("resp : ", resp)
+            # print("resp : ", resp)
             return send_file(BytesIO(image), attachment_filename='image.jpeg', as_attachment=False)
             # return jsonify(resp)
         except Exception as e:
