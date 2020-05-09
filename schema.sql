@@ -28,17 +28,18 @@ CREATE TABLE IF NOT EXISTS `category` (
 
 -- Dumping data for table pace_mp.category: ~2 rows (approximately)
 /*!40000 ALTER TABLE `category` DISABLE KEYS */;
-INSERT INTO `category` ( `name`) VALUES
-	('Furniture'),
-    ('Home & Kitchen appliances'),
-	('Computers & accessories'),
-    ('Phones & accessories'),
-	('Books & study materail'),
-    ('Automobile & accessories'),
-	('Sports accessories'),
-    ('Travel pass'),
-	('Electronics'),
-	('Personal accessories');
+INSERT INTO `category` ( `name`, `img`) VALUES
+	('Furniture','https://secure.img1-fg.wfcdn.com/im/28830642/resize-h800%5Ecompr-r85/7122/71221495/Geometric+Bookcase.jpg'),
+    ('Home & Kitchen appliances','https://asset20.ckassets.com/blog/wp-content/uploads/sites/5/2019/12/Home-Kitchen-Appliances-to-buy-from-BigBasket.jpg'),
+	('Computers & accessories','https://2pwgqm3nczsg1a5kw72u2pcf-wpengine.netdna-ssl.com/wp-content/uploads/2019/03/laptop-accessories.jpg'),
+    ('Phones & accessories','https://image-us.samsung.com/us/smartphones/galaxy-s20/galaxy-s20-plus/Cloud-Blue/Y2_Lockup_CloudBlue-1600x1200.jpg?$product-details-jpg'),
+	('Books & study materail','https://miro.medium.com/max/1400/1*S81O15rjKfG-BFdnNC6-GQ.jpeg'),
+    ('Automobile & accessories','https://www.ikea.com/my/en/images/products/lillabo-toy-car__0175385_PE328763_S5.JPG'),
+	('Sports accessories','https://baltimorefitnessforwomen.com/wp-content/uploads/2017/10/Clipart-Sports-Equipment-08.jpg'),
+    ('Travel pass','https://atlas-content-cdn.pixelsquid.com/stock-images/metro-card-RJEZMZD-600.jpg'),
+	('Electronics','https://images-na.ssl-images-amazon.com/images/I/51GmjUF1IDL._AC_SL1264_.jpg'),
+	('Personal accessories','https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcSq7bq-BLAgIiOqytBQLziQHS-rZgHq0TfMu3_FAWT3SwtaqqiQ&usqp=CAU"');
+    
 /*!40000 ALTER TABLE `category` ENABLE KEYS */;
 
 -- Dumping structure for table pace_mp.products
@@ -48,6 +49,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `categoryId` int(11) NOT NULL,
   `userId` int(11) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
+  `price` int(11) NOT NULL,
   `createdDate` timestamp DEFAULT current_timestamp,
   `modifiedDate` timestamp DEFAULT current_timestamp,
   PRIMARY KEY (`id`),
@@ -59,9 +61,10 @@ CREATE TABLE IF NOT EXISTS `products` (
 
 -- Dumping data for table pace_mp.products: ~2 rows (approximately)
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` (`name`, `categoryId`, `userId`, `description`) VALUES
-	('Mobile Phone', 1, 1, NULL),
-	('Tablet', 2, 1, NULL);
+INSERT INTO `products` (`name`, `categoryId`, `userId`, `description`, `price`) VALUES
+	('sofa', 1, 6, 'Bought 2 years back from Ikea. Beige color, perfect for relaxing. Looks new, no stains and in perfect condition for re use', 100),
+	('iPhone 7 plus', 4, 6, '2 years old, Rose Gold', 250),
+	('Metrocard', 8, 6, 'Metrocard worth $60 balance', 50);
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 
 -- Dumping structure for table pace_mp.product_image
@@ -86,7 +89,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `lastName` varchar(50) NOT NULL,
   `email` varchar(50) NOT NULL,
   `phone` varchar(10) DEFAULT NULL,
-  `createdDate` datetime DEFAULT CURRENT_TIMESTAMP,
+  `createdDate` timestamp DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -98,7 +101,8 @@ INSERT INTO `users` (`firstName`, `lastName`, `email`, `phone`, `createdDate`) V
 	('RT', 'G', 'raviteja.gajarla@gmail.com', '1234567890'),
 	('A', 'B', 'a.b@gmail.com', '1234567890'),
 	('c', 'D', 'c.d@gmail.com', '1234567890'),
-	('a', 'c', 'a.c@gmail.com', '1234567890');
+	('a', 'c', 'a.c@gmail.com', '1234567890'),
+    ('Jalpa','Ashara','jalpa.ashara@pace.edu',null);
     
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 
