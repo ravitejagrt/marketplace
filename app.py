@@ -211,19 +211,20 @@ def productImages(productId):
     if (request.method == 'GET'):
         try:
             cursor = mysql.connection.cursor()
-            sql_fetch_blob_query = """SELECT * FROM product_image WHERE product_id = %s"""
-            cursor.execute(sql_fetch_blob_query, (productId,))
+            sql_fetch_blob_query = """SELECT * FROM product_image WHERE productId = %(prodId)s"""
+            cursor.execute(sql_fetch_blob_query, {'prodId': productId})
             records = cursor.fetchall()
             # print("records : ", records)
             resp = []
             for row in records:
-                resp.append([{ 'imageId': row['image_id'], 'productId': row['product_id'], 'image': str(base64.encodebytes(row['product_image'])) }])
+                image = row['productImage']
+                resp.append([{ 'imageId': row['imageId'], 'productId': row['productId'], 'image': str(base64.encodebytes(row['productImage'])) }])
                 # i = row['product_image']
                 # write_file(i, "D:\PycharmWork\space1\pmp-api\image.jpeg")
 
             print("resp : ", resp)
-            # return send_file(BytesIO(images[0]), attachment_filename='image.jpeg', as_attachment=True)
-            return jsonify(resp)
+            return send_file(BytesIO(image), attachment_filename='image.jpeg', as_attachment=False)
+            # return jsonify(resp)
         except Exception as e:
             print(e)
         finally:
