@@ -216,8 +216,9 @@ def productImages(productId):
             records = cursor.fetchall()
             # print("records : ", records)
             resp = []
+            images  = []
             for row in records:
-                image = row['productImage']
+                images.add(row['productImage'])
                 resp.append([{ 'imageId': row['imageId'], 'productId': row['productId'], 'image': str(base64.encodebytes(row['productImage'])) }])
                 # i = row['product_image']
                 # write_file(i, "D:\PycharmWork\space1\pmp-api\image.jpeg")
@@ -229,6 +230,53 @@ def productImages(productId):
             print(e)
         finally:
             cursor.close()
+
+
+@app.route('/product/<int:productId>/allImages', methods=[ 'GET'])
+def getAllProductImageIds(productId):
+    try:
+        cursor = mysql.connection.cursor()
+        sql_fetch_blob_query = """SELECT productId, imageId FROM product_image WHERE productId = %(prodId)s"""
+        cursor.execute(sql_fetch_blob_query, {'prodId': productId})
+        records = cursor.fetchall()
+        imageIds = []
+        for row in records:
+            imageIds.append(row['imageId'])
+        resp = {
+            'productId': productId,
+            'imageIds': imageIds
+        }
+        return jsonify(resp)
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+
+@app.route('/image/<int:imageId>', methods=['GET'])
+def getImageById(imageId):
+    try:
+        cursor = mysql.connection.cursor()
+        sql_fetch_blob_query = """SELECT * FROM product_image WHERE imageId = %(imgId)s"""
+        cursor.execute(sql_fetch_blob_query, {'imgId': imageId})
+        record = cursor.fetchone()
+        # print("records : ", records)
+        # resp = []
+        # images = []
+        # for row in records:
+        #     images.add(row['productImage'])
+        #     resp.append([{'imageId': row['imageId'], 'productId': row['productId'],
+        #                   'image': str(base64.encodebytes(row['productImage']))}])
+        #     # i = row['product_image']
+        #     # write_file(i, "D:\PycharmWork\space1\pmp-api\image.jpeg")
+
+        # print("resp : ", resp)
+        image = record['productImage']
+        return send_file(BytesIO(image), attachment_filename='image.jpeg', as_attachment=False)
+        # return jsonify(resp)
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
 
 def write_file(data, filename):
     # Convert binary data to proper format and write it on Hard Disk
