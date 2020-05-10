@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 -- Dumping data for table pace_mp.users: ~4 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` (`firstName`, `lastName`, `email`, `phone`, `createdDate`) VALUES
+INSERT INTO `users` (`firstName`, `lastName`, `email`, `phone`) VALUES
 	('raviteja', 'gajarla', 'rg49526n@pace.edu', '8189847486'),
 	('RT', 'G', 'raviteja.gajarla@gmail.com', '1234567890'),
 	('A', 'B', 'a.b@gmail.com', '1234567890'),

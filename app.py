@@ -88,9 +88,11 @@ def setProducts():
         )
         insertData = (data['prodName'], data['categoryId'], data['userId'], data['prodDesc'], data['prodPrice'])
         resp = cursor.execute(insert_stmt, insertData)
+        id = cursor.lastrowid
+        print(id)
         mysql.connection.commit()
 
-        resp=jsonify({'msg':'Success'})
+        resp=jsonify({'prodId':id})
         resp.status_code = 200
         return resp
 
@@ -188,17 +190,18 @@ def productImages(productId):
             cursor = mysql.connection.cursor()
             r = request
             image = r.files['file']
-            if (str(image.filename) == "image.jpeg"):
+            if (str(image.filename).split('.')[-1] == "jpeg" or str(image.filename).split('.')[-1] == "jpg"):
 
                 insert_stmt = (
-                    "INSERT INTO product_image (product_id, product_image) "
+                    "INSERT INTO product_image (productId, productImage) "
                     "VALUES (%s, %s)"
                 )
                 # insertData = (productId, MySQLdb.escape_string(image.read()))
                 insertData = (productId, image.read())
                 resp = cursor.execute(insert_stmt, insertData)
+                id = cursor.lastrowid
                 mysql.connection.commit()
-                resp = {'message': 'Success'}
+                resp = {'message': 'Success', 'imageId': id}
                 # resp.status_code = 200
                 return resp
             else:
