@@ -113,7 +113,7 @@ def setProducts():
         insertData = (data['prodName'], data['categoryId'], data['userId'], data['prodDesc'], data['prodPrice'])
         resp = cursor.execute(insert_stmt, insertData)
         id = cursor.lastrowid
-        print(id)
+        print("created product id : ", id)
         mysql.connection.commit()
 
         resp=jsonify({'prodId':id})
@@ -174,7 +174,32 @@ def user(userId):
         finally:
             cursor.close()
     elif (request.method == 'PUT'):
-        return 'TO BE IMPLEMETED'
+        try:
+            userData = json.loads(request.data)
+            cursor = mysql.connection.cursor()
+            if 'firstName' in userData:
+                update_stmt = "UPDATE users SET firstName = %(fName)s WHERE id = %(uId)s"
+                # print("user details: ", ('userId': userId, 'firstName': userData['firstName']))
+                updateData = {'fName': userData['firstName'], 'uId': userId}
+            elif 'lastName' in userData:
+                update_stmt = "UPDATE users SET lastName = %(lName)s WHERE id = %(uId)s"
+                # print("user details: ", ('userId': userId, 'lastName': userData['lastName']))
+                updateData = {'lName': userData['lastName'], 'uId': userId}
+            elif 'phone' in userData:
+                update_stmt = "UPDATE users SET phone = %(ph)s WHERE id = %(uId)s"
+                # print("user details: ", ('userId': userId, 'phone': userDate['phone']))
+                updateData = {'ph': userData['phone'], 'uId': userId}
+            else:
+                return "No firstName or lastName or phone in request"
+            cursor.execute(update_stmt, updateData)
+            mysql.connection.commit()
+            resp = cursor._fetch_type
+            print("response:", resp)
+            return str(resp)
+        except Exception as e:
+            print(e)
+        finally:
+            cursor.close()
     elif (request.method == 'DELETE'):
         return 'TO BE IMPLEMETED'
     else:
