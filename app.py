@@ -10,26 +10,26 @@ app = Flask(__name__)
 CORS(app)
 
 config = configparser.RawConfigParser()
-config.read('ms3-properties.properties')
+config.read('environment/pmp-properties.properties')
 
 # MySQL configurations
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'root'
-app.config['MYSQL_DB'] = 'pace_mp'
+app.config['MYSQL_HOST'] = config['mysql']['host']
+app.config['MYSQL_USER'] = config['mysql']['user']
+app.config['MYSQL_PASSWORD'] = config['mysql']['password']
+app.config['MYSQL_DB'] = config['mysql']['db']
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
 # mysql.init_app(app)
 
 google_mail_settings = {
-    "MAIL_SERVER": 'smtp.gmail.com',
-    "MAIL_PORT": 465,
+    "MAIL_SERVER": config['smtp']['server'],
+    "MAIL_PORT": config['smtp']['port'],
     "MAIL_USE_TLS": False,
     "MAIL_USE_SSL": True,
-    "MAIL_USERNAME": 'jammr.marketplace@gmail.com',
-    "MAIL_PASSWORD": 'jammr@pacemp',
-    "MAIL_DEFAULT_SENDER": 'jammr.marketplace@gmail.com'
+    "MAIL_USERNAME": config['smtp']['username'],
+    "MAIL_PASSWORD": config['smtp']['password'],
+    "MAIL_DEFAULT_SENDER": config['smtp']['default_sender']
 }
 
 app.config.update(google_mail_settings)
