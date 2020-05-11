@@ -94,7 +94,7 @@ def setProducts():
         insertData = (data['prodName'], data['categoryId'], data['userId'], data['prodDesc'], data['prodPrice'])
         resp = cursor.execute(insert_stmt, insertData)
         id = cursor.lastrowid
-        print(id)
+        print("created product id : ", id)
         mysql.connection.commit()
 
         resp=jsonify({'prodId':id})
