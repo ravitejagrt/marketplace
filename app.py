@@ -59,6 +59,25 @@ def getCategories():
         print(e)
     finally:
         cursor.close()
+    
+@app.route('/categories/<int:categoryId>', methods=['GET'])
+def getCategoryById(categoryId):
+    try:
+        cursor = mysql.connection.cursor()
+        select_stmt = "SELECT id, name, img FROM category where  id = %(catId)s"
+        cursor.execute(select_stmt, {'catId': categoryId})
+        cat = cursor.fetchone()
+        categories = {
+            "id": cat["id"],
+            "name": cat["name"],
+            "img": cat["img"].decode('utf-8')
+        }
+        resp = jsonify(categories)
+        return resp
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
 
 @app.route('/products', methods=['GET'])
 def getProducts():
