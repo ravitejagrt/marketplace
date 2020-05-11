@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request, send_file
 from flask_mysqldb import MySQL
 import MySQLdb
 from flask_cors import CORS
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
 CORS(app)
@@ -21,6 +22,19 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
 # mysql.init_app(app)
 
+google_mail_settings = {
+    "MAIL_SERVER": 'smtp.gmail.com',
+    "MAIL_PORT": 465,
+    "MAIL_USE_TLS": False,
+    "MAIL_USE_SSL": True,
+    "MAIL_USERNAME": 'jammr.marketplace@gmail.com',
+    "MAIL_PASSWORD": 'jammr@pacemp',
+    "MAIL_DEFAULT_SENDER": 'jammr.marketplace@gmail.com'
+}
+
+app.config.update(google_mail_settings)
+mail = Mail(app)
+
 @app.route('/', methods = ['GET'])
 def index():
     try:
@@ -33,6 +47,23 @@ def index():
         print(e)
     finally:
         cursor.close()
+
+@app.route('/email', methods=['POST'])
+def sendEmail():
+    try:
+        data = json.loads(request.data)
+        msg = Message(subject=data['subject'],
+                      recipients=data['recipients'])
+        msg.body = data['body']
+        mail.send(msg)
+        return {
+            "status": "success",
+            "message": "Mail sent"
+        }
+    except Exception as e:
+        print("exception: ", e)
+    finally:
+        print("end finally")
 
 @app.route('/categories', methods=['GET'])
 def getCategories():
