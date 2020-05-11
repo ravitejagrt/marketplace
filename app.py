@@ -66,10 +66,15 @@ def getProducts():
         # conn = mysql.connect()
         # cursor = conn.cursor(pymysql.cursors.DictCursor)
         cursor = mysql.connection.cursor()
-        cursor.execute("SELECT * FROM products")
-        products = cursor.fetchall()
-        resp = jsonify(products)
-        resp.status_code = 200
+        cursor.execute("select id, name, categoryId, userId, description, price, datediff(current_date(), createdDate) as days  from products order by modifiedDate desc")
+        rows = cursor.fetchall()
+        products = []
+        i=0
+        for row in rows:
+            products.append(row)
+            i+=1
+        #print(products)
+        resp = {'products': products}
         return resp
     except Exception as e:
         print(e)
@@ -105,12 +110,9 @@ def getProductById(productId):
         try:
             cursor = mysql.connection.cursor()
             select_stmt = "SELECT id, name, categoryId, userId, description, price, datediff(current_date(), createdDate) as days FROM products WHERE id = %(prodId)s"
-            print(select_stmt)
             cursor.execute(select_stmt, {'prodId': productId})
             product = cursor.fetchall()
-            print('p: ', product)
             resp = jsonify(product)
-            resp.status_code = 200
             return resp
         except Exception as e:
             print('exception: ', e)
@@ -119,7 +121,18 @@ def getProductById(productId):
     elif (request.method == 'PUT'):
         return "TO BE IMPLEMENTED"
     elif (request.method == 'DELETE'):
-        return "TO BE IMPLEMENTED"
+        try:
+            cursor = mysql.connection.cursor()
+            select_stmt = "DELETE FROM products WHERE id = %(prodId)s"
+            print(select_stmt)
+            cursor.execute(select_stmt, {'prodId': productId})
+            mysql.connection.commit()
+            resp = jsonify({'msg': 'Success'})
+            return resp
+        except Exception as e:
+            print('exception: ', e)
+        finally:
+            cursor.close()   
     else:
         return 'NOT IMPLEMENTED'
 
@@ -245,10 +258,10 @@ def getAllProductImageIds(productId):
         imageIds = []
         for row in records:
             imageIds.append(row['imageId'])
-        resp = {
-            'productId': productId,
-            'imageIds': imageIds
-        }
+        
+        images =  {'productId': productId,
+                'imageIds': imageIds}
+        resp = {'images': images}
         return jsonify(resp)
     except Exception as e:
         print(e)
