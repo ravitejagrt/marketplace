@@ -41,7 +41,6 @@ def index():
         cursor = mysql.connection.cursor()
         # cur.execute('SELECT * FROM products')
         # results = cur.fetchall()
-        print('cursor created')
         return jsonify('Database connection worked!')
     except Exception as e:
         print(e)
@@ -54,7 +53,7 @@ def sendEmail():
         data = json.loads(request.data)
         msg = Message(subject=data['subject'],
                       recipients=data['recipients'])
-        msg.body = data['body']
+        msg.html = data['body']
         mail.send(msg)
         return {
             "status": "success",
@@ -71,8 +70,6 @@ def getCategories():
         cursor = mysql.connection.cursor()
         cursor.execute("SELECT id, name, img FROM category")
         cat = cursor.fetchall()
-        #print('line 43 ', cat)
-        print()
         
         categories = []
         for i in cat:
@@ -144,7 +141,6 @@ def setProducts():
         insertData = (data['prodName'], data['categoryId'], data['userId'], data['prodDesc'], data['prodPrice'])
         resp = cursor.execute(insert_stmt, insertData)
         id = cursor.lastrowid
-        print("created product id : ", id)
         mysql.connection.commit()
 
         resp=jsonify({'prodId':id})
@@ -174,7 +170,6 @@ def getProductById(productId):
         try:
             cursor = mysql.connection.cursor()
             select_stmt = "DELETE FROM products WHERE id = %(prodId)s"
-            print(select_stmt)
             cursor.execute(select_stmt, {'prodId': productId})
             mysql.connection.commit()
             resp = jsonify({'msg': 'Success'})
@@ -192,13 +187,10 @@ def user(userId):
         try:
             cursor = mysql.connection.cursor()
             select_stmt = "SELECT id, firstName, lastName, email FROM users WHERE id = %(userId)s"
-            print(select_stmt)
             cursor.execute(select_stmt, {'userId': userId})
 
-            user = cursor.fetchall()
+            user = cursor.fetchone()
             resp = jsonify(user)
-            # resp = jsonify({'message': ('Functionality work in progress. Visit back later ' + emailId)})
-            resp.status_code = 200
             return resp
         except Exception as e:
             print(e)
@@ -244,7 +236,6 @@ def signup():
         count=0
         for item in data:
             count+=1
-        print(count)
         cursor = mysql.connection.cursor()
 
         # sql = "INSERT INTO users (firstName, lastName, email, phone) VALUES (%s, %s, %s, %s)"
@@ -263,8 +254,6 @@ def signup():
         cursor.execute(select_stmt, {'emailId': data['email']})
         user = cursor.fetchall()
         resp = jsonify(user)
-        print("response : ", resp)
-        resp.status_code = 200
         return resp
     except Exception as e:
         print(e)
