@@ -1,10 +1,12 @@
 import configparser, json, base64
+import smtplib
+import ssl
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText              
 from io import BytesIO
 from flask import Flask, jsonify, request, send_file
 from flask_mysqldb import MySQL
-import MySQLdb
 from flask_cors import CORS
-from flask_mail import Mail, Message
 
 app = Flask(__name__)
 CORS(app)
@@ -22,19 +24,6 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
 # mysql.init_app(app)
 
-google_mail_settings = {
-    "MAIL_SERVER": config['smtp']['server'],
-    "MAIL_PORT": config['smtp']['port'],
-    "MAIL_USE_TLS": False,
-    "MAIL_USE_SSL": True,
-    "MAIL_USERNAME": config['smtp']['username'],
-    "MAIL_PASSWORD": config['smtp']['password'],
-    "MAIL_DEFAULT_SENDER": config['smtp']['default_sender']
-}
-
-app.config.update(google_mail_settings)
-mail = Mail(app)
-
 @app.route('/', methods = ['GET'])
 def index():
     try:
@@ -47,18 +36,40 @@ def index():
     finally:
         cursor.close()
 
+context = ssl.create_default_context()
 @app.route('/email', methods=['POST'])
 def sendEmail():
     try:
         data = json.loads(request.data)
-        msg = Message(subject=data['subject'],
-                      recipients=data['recipients'])
-        msg.html = data['body']
-        mail.send(msg)
-        return {
-            "status": "success",
-            "message": "Mail sent"
-        }
+        port = config['smtp']['port']
+        smtp_server = config['smtp']['server']
+        sender_email = config['smtp']['username']
+        receiver_email = data['recipients']
+        print(type(receiver_email[0]))
+        password = config['smtp']['password']
+
+        message = MIMEMultipart("alternative")
+        message["Subject"] = data['subject']
+        message["From"] = sender_email
+        message["To"] = receiver_email[0]
+        html_msg = "<html><body>" + data['body'] + "</body></html>"
+        text = MIMEText(data['text'], "plain")
+        html = MIMEText(html_msg, "html")
+        message.attach(text)
+        message.attach(html)
+
+        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+          server.login(sender_email, password)
+          server.sendmail(sender_email, receiver_email[0], message.as_string().encode('utf-8'))
+
+        return jsonify({
+          "status": "success",
+          "message": "Mail sent"
+        })
+    except smtplib.SMTPException as smtpex:
+        print(smtpex)
+    except smtplib.SMTPAuthenticationError as auterr:
+        print(auterr)
     except Exception as e:
         print("exception: ", e)
     finally:
@@ -80,8 +91,7 @@ def getCategories():
             }
             categories.append(temp)
         resp = jsonify(categories)
-        resp.status_code = 200
-        print("line 56 ", resp)
+        print(resp)
         return resp
     except Exception as e:
         print(e)
@@ -122,7 +132,7 @@ def getProducts():
             i+=1
         #print(products)
         resp = {'products': products}
-        return resp
+        return jsonify(resp)
     except Exception as e:
         print(e)
     finally:
@@ -144,7 +154,6 @@ def setProducts():
         mysql.connection.commit()
 
         resp=jsonify({'prodId':id})
-        resp.status_code = 200
         return resp
 
     except Exception as e:
@@ -157,7 +166,9 @@ def getProductById(productId):
             cursor = mysql.connection.cursor()
             select_stmt = "SELECT id, name, categoryId, userId, description, price, datediff(current_date(), createdDate) as days FROM products WHERE id = %(prodId)s"
             cursor.execute(select_stmt, {'prodId': productId})
-            product = cursor.fetchall()
+            product = cursor.fetchone()
+            categories = json.loads(getCategoryById(product['categoryId']).data)
+            product['categoryName'] = categories['name']
             resp = jsonify(product)
             return resp
         except Exception as e:
@@ -217,7 +228,6 @@ def user(userId):
             cursor.execute(update_stmt, updateData)
             mysql.connection.commit()
             resp = cursor._fetch_type
-            print("response:", resp)
             return str(resp)
         except Exception as e:
             print(e)
@@ -231,7 +241,6 @@ def user(userId):
 @app.route('/user', methods=['POST'])
 def signup():
     try:
-        print('line 121',request.data, ' ', len(request.data))
         data = json.loads(request.data)
         count=0
         for item in data:
@@ -279,11 +288,9 @@ def productImages(productId):
                 id = cursor.lastrowid
                 mysql.connection.commit()
                 resp = {'message': 'Success', 'imageId': id}
-                # resp.status_code = 200
-                return resp
             else:
                 resp = {'message': 'Correct file not received.'}
-            return resp
+            return jsonify(resp)
         except Exception as e:
             print(e)
         finally:
