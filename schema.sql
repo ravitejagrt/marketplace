@@ -106,6 +106,29 @@ INSERT INTO `users` (`firstName`, `lastName`, `email`, `phone`) VALUES
     
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 
+-- Dumping structure for table pace_mp.fav_products
+CREATE TABLE IF NOT EXISTS `fav_products` (
+  `user_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`product_id`,`user_id`),
+  KEY `FK_fav_products_users` (`user_id`),
+  KEY `FK_fav_products_products` (`product_id`),
+  CONSTRAINT `FK_fav_products_products` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
+  CONSTRAINT `FK_fav_products_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Dumping data for table pace_mp.fav_products: ~6 rows (approximately)
+/*!40000 ALTER TABLE `fav_products` DISABLE KEYS */;
+INSERT INTO `fav_products` (`user_id`, `product_id`, `created_date`) VALUES
+	(1, 1, '2020-09-22 22:22:01'),
+	(1, 2, '2020-09-25 15:35:11'),
+	(1, 3, '2020-09-25 15:35:28'),
+	(2, 3, '2020-09-25 15:35:39'),
+	(2, 7, '2020-09-22 22:24:52'),
+	(1, 9, '2020-09-25 15:25:59');
+/*!40000 ALTER TABLE `fav_products` ENABLE KEYS */;
+
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
