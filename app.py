@@ -259,7 +259,7 @@ def userFavProducts(userId):
 @app.route('/user/<int:userId>/favProduct/<int:productId>', methods=['GET', 'POST', 'DELETE'])
 def favProduct(userId, productId):
     if (request.method == 'GET'):
-
+        return 'NOT IMPLEMENTED'
     elif (request.method == 'POST'):
         try:
             cursor = mysql.connection.cursor()
