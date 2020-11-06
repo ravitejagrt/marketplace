@@ -1,6 +1,7 @@
 import configparser, json, base64
 import smtplib
 import ssl
+import flask
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText              
 from io import BytesIO
@@ -117,6 +118,29 @@ def getCategoryById(categoryId):
     finally:
         cursor.close()
 
+@app.route('/search', methods=['GET'])
+def search():
+    try:
+        name = request.args.get('q')
+        print("search string: ", name)
+        cursor = mysql.connection.cursor()
+        select_stmt = "select id, name, categoryId, userId, description, price, datediff(current_date(), createdDate) as days  from products WHERE name LIKE %(name)s"
+        search_string = "%" + name + "%"
+        rows = cursor.execute(select_stmt, {'name': search_string})
+        print("rows: ", rows)
+        rows_data = cursor.fetchall()
+        # products = []
+        # for row in rows_data:
+        #     products.append(row)
+        # print(products)
+        resp = {'totalRecords': rows, 'products': rows_data}
+        return jsonify(resp)
+    except Exception as e:
+        print(e)
+    finally:
+        if ('cursor' in locals()):
+            cursor.close()
+
 @app.route('/products', methods=['GET'])
 def getProducts():
     try:
@@ -136,7 +160,8 @@ def getProducts():
     except Exception as e:
         print(e)
     finally:
-        cursor.close()
+        if ('cursor' in locals()):
+            cursor.close()
 
 @app.route('/products', methods=['POST'])     
 def setProducts():   
