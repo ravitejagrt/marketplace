@@ -13,7 +13,7 @@
 
 
 -- Dumping database structure for pace_mp
-CREATE DATABASE IF NOT EXISTS `pace_mp` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE IF NOT EXISTS `pace_mp` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci !80016 DEFAULT ENCRYPTION='N' */;
 
 USE `pace_mp`;
 
@@ -33,7 +33,7 @@ INSERT INTO `category` ( `name`, `img`) VALUES
     ('Home & Kitchen appliances','https://asset20.ckassets.com/blog/wp-content/uploads/sites/5/2019/12/Home-Kitchen-Appliances-to-buy-from-BigBasket.jpg'),
 	('Computers & accessories','https://2pwgqm3nczsg1a5kw72u2pcf-wpengine.netdna-ssl.com/wp-content/uploads/2019/03/laptop-accessories.jpg'),
     ('Phones & accessories','https://image-us.samsung.com/us/smartphones/galaxy-s20/galaxy-s20-plus/Cloud-Blue/Y2_Lockup_CloudBlue-1600x1200.jpg?$product-details-jpg'),
-	('Books & study materail','https://miro.medium.com/max/1400/1*S81O15rjKfG-BFdnNC6-GQ.jpeg'),
+	('Books & study material','https://miro.medium.com/max/1400/1*S81O15rjKfG-BFdnNC6-GQ.jpeg'),
     ('Automobile & accessories','https://www.ikea.com/my/en/images/products/lillabo-toy-car__0175385_PE328763_S5.JPG'),
 	('Sports accessories','https://baltimorefitnessforwomen.com/wp-content/uploads/2017/10/Clipart-Sports-Equipment-08.jpg'),
     ('Travel pass','https://atlas-content-cdn.pixelsquid.com/stock-images/metro-card-RJEZMZD-600.jpg'),
@@ -53,10 +53,12 @@ CREATE TABLE IF NOT EXISTS `products` (
   `createdDate` timestamp DEFAULT current_timestamp,
   `modifiedDate` timestamp DEFAULT current_timestamp,
   PRIMARY KEY (`id`),
-  KEY `FK_products_users` (`userId`),
-  KEY `FK_products_category` (`categoryId`),
-  CONSTRAINT `FK_products_category` FOREIGN KEY (`categoryId`) REFERENCES `category` (`id`),
+  CONSTRAINT `FK_products_category` FOREIGN KEY (`categoryId`) REFERENCES `category` (`id`)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
   CONSTRAINT `FK_products_users` FOREIGN KEY (`userId`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Dumping data for table pace_mp.products: ~2 rows (approximately)
@@ -72,7 +74,10 @@ CREATE TABLE IF NOT EXISTS `product_image` (
   `imageId` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `productId` int(11) NOT NULL DEFAULT '0',
   `productImage` longblob NOT NULL,
-  UNIQUE KEY `image_id` (`imageId`)
+  PRIMARY KEY `image_id` (`imageId`),
+  CONSTRAINT FK_ProductImage foreign key (productId) references products(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Dumping data for table pace_mp.product_image: ~1 rows (approximately)
@@ -112,10 +117,12 @@ CREATE TABLE IF NOT EXISTS `fav_products` (
   `product_id` int(11) NOT NULL,
   `created_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`product_id`,`user_id`),
-  KEY `FK_fav_products_users` (`user_id`),
-  KEY `FK_fav_products_products` (`product_id`),
-  CONSTRAINT `FK_fav_products_products` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`),
   CONSTRAINT `FK_fav_products_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+  CONSTRAINT `FK_fav_products_products` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Dumping data for table pace_mp.fav_products: ~6 rows (approximately)
