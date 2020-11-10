@@ -1,7 +1,6 @@
 import configparser, json, base64
 import smtplib
 import ssl
-import flask
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText              
 from io import BytesIO
@@ -46,7 +45,6 @@ def sendEmail():
         smtp_server = config['smtp']['server']
         sender_email = config['smtp']['username']
         receiver_email = data['recipients']
-        print(type(receiver_email[0]))
         password = config['smtp']['password']
 
         message = MIMEMultipart("alternative")
@@ -73,8 +71,6 @@ def sendEmail():
         print(auterr)
     except Exception as e:
         print("exception: ", e)
-    finally:
-        print("end finally")
 
 @app.route('/categories', methods=['GET'])
 def getCategories():
@@ -91,8 +87,8 @@ def getCategories():
                 "img": i["img"].decode('utf-8')
             }
             categories.append(temp)
+        
         resp = jsonify(categories)
-        print(resp)
         return resp
     except Exception as e:
         print(e)
@@ -122,17 +118,14 @@ def getCategoryById(categoryId):
 def search():
     try:
         name = request.args.get('q')
-        print("search string: ", name)
         cursor = mysql.connection.cursor()
-        select_stmt = "select id, name, categoryId, userId, description, price, datediff(current_date(), createdDate) as days  from products WHERE name LIKE %(name)s"
+        select_stmt = """select id, name, categoryId, userId, description, price, datediff(current_date(), createdDate) as days  
+                         from products 
+                         WHERE name LIKE %(name)s
+                         order by modifiedDate desc"""
         search_string = "%" + name + "%"
         rows = cursor.execute(select_stmt, {'name': search_string})
-        print("rows: ", rows)
         rows_data = cursor.fetchall()
-        # products = []
-        # for row in rows_data:
-        #     products.append(row)
-        # print(products)
         resp = {'totalRecords': rows, 'products': rows_data}
         return jsonify(resp)
     except Exception as e:
@@ -147,7 +140,9 @@ def getProducts():
         # conn = mysql.connect()
         # cursor = conn.cursor(pymysql.cursors.DictCursor)
         cursor = mysql.connection.cursor()
-        cursor.execute("select id, name, categoryId, userId, description, price, datediff(current_date(), createdDate) as days  from products order by modifiedDate desc")
+        cursor.execute("""select id, name, categoryId, userId, description, price, datediff(current_date(), createdDate) as days  
+                            from products 
+                            order by modifiedDate desc""")
         rows = cursor.fetchall()
         products = []
         i=0
@@ -183,12 +178,15 @@ def setProducts():
 
     except Exception as e:
             print(e)
+    finally:
+        if ('cursor' in locals()):
+            cursor.close()
 
 @app.route('/product/<int:productId>', methods=['GET', 'PUT', 'DELETE'])
 def getProductById(productId):
-    if (request.method == 'GET'):
-        try:
-            cursor = mysql.connection.cursor()
+    try:
+        cursor = mysql.connection.cursor()
+        if (request.method == 'GET'):
             select_stmt = "SELECT id, name, categoryId, userId, description, price, datediff(current_date(), createdDate) as days FROM products WHERE id = %(prodId)s"
             cursor.execute(select_stmt, {'prodId': productId})
             product = cursor.fetchone()
@@ -196,46 +194,32 @@ def getProductById(productId):
             product['categoryName'] = categories['name']
             resp = jsonify(product)
             return resp
-        except Exception as e:
-            print('exception: ', e)
-        finally:
-            cursor.close()       
-    elif (request.method == 'PUT'):
-        return "TO BE IMPLEMENTED"
-    elif (request.method == 'DELETE'):
-        try:
-            cursor = mysql.connection.cursor()
+        elif (request.method == 'PUT'):
+            return "TO BE IMPLEMENTED"
+        elif (request.method == 'DELETE'):
             select_stmt = "DELETE FROM products WHERE id = %(prodId)s"
             cursor.execute(select_stmt, {'prodId': productId})
             mysql.connection.commit()
             resp = jsonify({'msg': 'Success'})
             return resp
-        except Exception as e:
+    except Exception as e:
             print('exception: ', e)
-        finally:
-            cursor.close()   
-    else:
-        return 'NOT IMPLEMENTED'
+    finally:
+        cursor.close()     
 
 @app.route('/user/<int:userId>', methods=['GET', 'PUT', 'DELETE'])
 def user(userId):
-    if (request.method == 'GET'):
-        try:
-            cursor = mysql.connection.cursor()
+    try:
+        cursor = mysql.connection.cursor()
+        if (request.method == 'GET'):
             select_stmt = "SELECT id, firstName, lastName, email FROM users WHERE id = %(userId)s"
             cursor.execute(select_stmt, {'userId': userId})
 
             user = cursor.fetchone()
             resp = jsonify(user)
             return resp
-        except Exception as e:
-            print(e)
-        finally:
-            cursor.close()
-    elif (request.method == 'PUT'):
-        try:
+        elif (request.method == 'PUT'):
             userData = json.loads(request.data)
-            cursor = mysql.connection.cursor()
             if 'firstName' in userData:
                 update_stmt = "UPDATE users SET firstName = %(fName)s WHERE id = %(uId)s"
                 # print("user details: ", ('userId': userId, 'firstName': userData['firstName']))
@@ -254,14 +238,13 @@ def user(userId):
             mysql.connection.commit()
             resp = cursor._fetch_type
             return str(resp)
-        except Exception as e:
-            print(e)
-        finally:
-            cursor.close()
-    elif (request.method == 'DELETE'):
-        return 'TO BE IMPLEMETED'
-    else:
-        return 'NOT IMPLEMETED'  
+        elif (request.method == 'DELETE'):
+            return 'TO BE IMPLEMETED'
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+
 
 @app.route('/user/<int:userId>/favProducts', methods=['GET'])
 def userFavProducts(userId):
@@ -283,11 +266,11 @@ def userFavProducts(userId):
 
 @app.route('/user/<int:userId>/favProduct/<int:productId>', methods=['GET', 'POST', 'DELETE'])
 def favProduct(userId, productId):
-    if (request.method == 'GET'):
-        return 'NOT IMPLEMENTED'
-    elif (request.method == 'POST'):
-        try:
-            cursor = mysql.connection.cursor()
+    try:
+        cursor = mysql.connection.cursor()
+        if (request.method == 'GET'):
+            return 'NOT IMPLEMENTED'
+        elif (request.method == 'POST'):
             create_stmt = "INSERT INTO fav_products (user_id, product_id) VALUES (%(userId)s, %(productId)s)"
             cursor.execute(create_stmt, {'userId': userId, 'productId': productId})
 
@@ -299,25 +282,17 @@ def favProduct(userId, productId):
             favProduct = cursor.fetchone()
             resp = jsonify(favProduct)
             return resp
-        except Exception as e:
-            print(e)
-        finally:
-            cursor.close()
-    elif (request.method == 'DELETE'):
-        try:
-            cursor = mysql.connection.cursor()
+        elif (request.method == 'DELETE'):
             delete_stmt = "DELETE FROM fav_products WHERE user_id = %(userId)s AND product_id = %(productId)s"
             cursor.execute(delete_stmt, {'userId': userId, 'productId': productId})
 
             mysql.connection.commit()
             resp = jsonify({'msg': 'Success'})
             return resp
-        except Exception as e:
+    except Exception as e:
             print(e)
-        finally:
-            cursor.close()
-    else:
-        return 'NOT IMPLEMETED'
+    finally:
+        cursor.close()
 
 @app.route('/user', methods=['POST'])
 def signup():
@@ -349,12 +324,33 @@ def signup():
         print(e)
     finally:
      cursor.close()
-
-@app.route('/product/<int:productId>/image', methods=['POST', 'GET'])
-def productImages(productId):
-    if (request.method == 'POST'):
+     
+@app.route('/user/<int:userId>/products', methods=['GET'])
+def getProductsByUser(userId):
+    if (request.method == 'GET'):
         try:
             cursor = mysql.connection.cursor()
+            select_stmt = """SELECT id, name, categoryId, userId, description, price,
+                                  datediff(current_date(), createdDate) as days
+                             FROM products WHERE userId = %(userId)s
+                             ORDER BY modifiedDate desc"""
+            rows = cursor.execute(select_stmt, {'userId': userId})
+
+
+            products = cursor.fetchall()
+            resp = {'totalRecords': rows, 'products': products}
+            return jsonify(resp)
+        except Exception as e:
+            print(e)
+        finally:
+            cursor.close()
+
+
+@app.route('/product/<int:productId>/image', methods=['POST'])
+def productImages(productId):
+    try:
+        cursor = mysql.connection.cursor()
+        if (request.method == 'POST'):
             r = request
             image = r.files['file']
             if (str(image.filename).split('.')[-1] == "jpeg" or str(image.filename).split('.')[-1] == "jpg"):
@@ -372,32 +368,10 @@ def productImages(productId):
             else:
                 resp = {'message': 'Correct file not received.'}
             return jsonify(resp)
-        except Exception as e:
-            print(e)
-        finally:
-            cursor.close()
-    if (request.method == 'GET'):
-        try:
-            cursor = mysql.connection.cursor()
-            sql_fetch_blob_query = """SELECT * FROM product_image WHERE productId = %(prodId)s"""
-            cursor.execute(sql_fetch_blob_query, {'prodId': productId})
-            records = cursor.fetchall()
-            # print("records : ", records)
-            resp = []
-            images  = []
-            for row in records:
-                images.add(row['productImage'])
-                resp.append([{ 'imageId': row['imageId'], 'productId': row['productId'], 'image': str(base64.encodebytes(row['productImage'])) }])
-                # i = row['product_image']
-                # write_file(i, "D:\PycharmWork\space1\pmp-api\image.jpeg")
-
-            # print("resp : ", resp)
-            return send_file(BytesIO(image), attachment_filename='image.jpeg', as_attachment=False)
-            # return jsonify(resp)
-        except Exception as e:
-            print(e)
-        finally:
-            cursor.close()
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
 
 
 @app.route('/product/<int:productId>/allImages', methods=[ 'GET'])
@@ -445,6 +419,28 @@ def getImageById(imageId):
         print(e)
     finally:
         cursor.close()
+
+@app.route('/browse/<int:categoryId>', methods=['GET'])
+def getProductsByCategoryId(categoryId):
+    if (request.method == 'GET'):
+        try:
+            cursor = mysql.connection.cursor()
+            select_stmt = """SELECT id, name, categoryId, userId, description, price,
+                                  datediff(current_date(), createdDate) as days
+                             FROM products WHERE categoryId = %(categoryId)s
+                             ORDER BY modifiedDate desc"""
+            cursor.execute(select_stmt, {'categoryId': categoryId})
+            rows = cursor.fetchall()
+            products = []
+            for row in rows:
+                products.append(row)
+            resp = {'products': products}
+            return jsonify(resp)
+        except Exception as e:
+            print('exception: ', e)
+        finally:
+            cursor.close()
+
 
 def write_file(data, filename):
     # Convert binary data to proper format and write it on Hard Disk
