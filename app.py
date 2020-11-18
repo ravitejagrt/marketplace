@@ -247,47 +247,52 @@ def user(userId):
 
 
 @app.route('/user/<int:userId>/favProducts', methods=['GET'])
-def userFavProducts(userId):
-    if (request.method == 'GET'):
-        try:
-            cursor = mysql.connection.cursor()
-            select_stmt = "SELECT product_id, created_date FROM fav_products WHERE user_id = %(userId)s"
-            cursor.execute(select_stmt, {'userId': userId})
-
-            user = cursor.fetchall()
-            resp = jsonify(user)
-            return resp
-        except Exception as e:
-            print(e)
-        finally:
-            cursor.close()
-    else:
-        return 'NOT IMPLEMETED'
+def getAllfavProducts(userId):
+    try:
+        cursor = mysql.connection.cursor()
+        select_stmt = """SELECT p.id
+                                , p.name
+                                , p.categoryId
+                                , p.userId
+                                , p.description
+                                , p.price
+                                , datediff(current_date(), p.createdDate) as days
+                         FROM fav_products fp JOIN products p ON (fp.product_id = p.id)
+                         WHERE fp.user_id = %(uId)s"""
+        rows = cursor.execute(select_stmt, {'uId': userId})
+        favProducts = cursor.fetchall()
+        resp = {'totalRecords': rows, 'products': favProducts}
+        return jsonify(resp)
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
 
 @app.route('/user/<int:userId>/favProduct/<int:productId>', methods=['GET', 'POST', 'DELETE'])
 def favProduct(userId, productId):
     try:
         cursor = mysql.connection.cursor()
         if (request.method == 'GET'):
-            return 'NOT IMPLEMENTED'
+            select_stmt = """SELECT IF(count(1) > 0, true, false) as isFav
+                              FROM fav_products
+                              WHERE user_id = %(userId)s AND product_id = %(productId)s"""
+            rows = cursor.execute(select_stmt, {'userId': userId, 'productId': productId})
+            favProduct = cursor.fetchone()
+            resp = jsonify(favProduct)
+
         elif (request.method == 'POST'):
             create_stmt = "INSERT INTO fav_products (user_id, product_id) VALUES (%(userId)s, %(productId)s)"
             cursor.execute(create_stmt, {'userId': userId, 'productId': productId})
-
             mysql.connection.commit()
+            resp = jsonify({'isFav': True})
 
-            select_stmt = "SELECT product_id, created_date FROM fav_products WHERE user_id = %(userId)s AND product_id = %(productId)s"
-            cursor.execute(select_stmt, {'userId': userId, 'productId': productId})
-
-            favProduct = cursor.fetchone()
-            resp = jsonify(favProduct)
-            return resp
         elif (request.method == 'DELETE'):
-            delete_stmt = "DELETE FROM fav_products WHERE user_id = %(userId)s AND product_id = %(productId)s"
-            cursor.execute(delete_stmt, {'userId': userId, 'productId': productId})
-
+            delete_stmt = """DELETE FROM fav_products
+                            WHERE user_id = %(userId)s AND product_id = %(productId)s"""
+            del_ex = cursor.execute(delete_stmt, {'userId': userId, 'productId': productId})
+            print(del_ex)
             mysql.connection.commit()
-            resp = jsonify({'msg': 'Success'})
+            resp = jsonify({'isFav': False})
             return resp
     except Exception as e:
             print(e)
