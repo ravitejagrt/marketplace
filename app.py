@@ -137,20 +137,12 @@ def search():
 @app.route('/products', methods=['GET'])
 def getProducts():
     try:
-        # conn = mysql.connect()
-        # cursor = conn.cursor(pymysql.cursors.DictCursor)
         cursor = mysql.connection.cursor()
-        cursor.execute("""select id, name, categoryId, userId, description, price, datediff(current_date(), createdDate) as days  
-                            from products 
-                            order by modifiedDate desc""")
-        rows = cursor.fetchall()
-        products = []
-        i=0
-        for row in rows:
-            products.append(row)
-            i+=1
-        #print(products)
-        resp = {'products': products}
+        rows = cursor.execute("select id, name, categoryId, userId, description, price, "
+                       "datediff(current_date(), createdDate) as days  "
+                       "from products order by modifiedDate desc")
+        products = cursor.fetchall()
+        resp = {'totalRecords': rows, 'products': products}
         return jsonify(resp)
     except Exception as e:
         print(e)
@@ -239,7 +231,11 @@ def user(userId):
             resp = cursor._fetch_type
             return str(resp)
         elif (request.method == 'DELETE'):
-            return 'TO BE IMPLEMETED'
+            select_stmt = "DELETE FROM users WHERE id = %(userId)s"
+            cursor.execute(select_stmt, {'userId': userId})
+            mysql.connection.commit()
+            resp = jsonify({'msg': 'Success'})
+            return resp
     except Exception as e:
         print(e)
     finally:
@@ -293,7 +289,7 @@ def favProduct(userId, productId):
             print(del_ex)
             mysql.connection.commit()
             resp = jsonify({'isFav': False})
-            return resp
+        return resp
     except Exception as e:
             print(e)
     finally:
@@ -340,8 +336,6 @@ def getProductsByUser(userId):
                              FROM products WHERE userId = %(userId)s
                              ORDER BY modifiedDate desc"""
             rows = cursor.execute(select_stmt, {'userId': userId})
-
-
             products = cursor.fetchall()
             resp = {'totalRecords': rows, 'products': products}
             return jsonify(resp)
@@ -435,11 +429,9 @@ def getProductsByCategoryId(categoryId):
                              FROM products WHERE categoryId = %(categoryId)s
                              ORDER BY modifiedDate desc"""
             cursor.execute(select_stmt, {'categoryId': categoryId})
-            rows = cursor.fetchall()
-            products = []
-            for row in rows:
-                products.append(row)
-            resp = {'products': products}
+            rows = cursor.execute(select_stmt, {'categoryId': categoryId})
+            products = cursor.fetchall()
+            resp = {'totalRecords': rows, 'products': products}
             return jsonify(resp)
         except Exception as e:
             print('exception: ', e)
